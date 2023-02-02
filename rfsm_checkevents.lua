@@ -10,7 +10,7 @@
 -- otherwise.
 --
 
-module("rfsm_checkevents", package.seeall)
+--module("rfsm_checkevents", package.seeall)
 
 local function setup_checkevents(fsm)
 

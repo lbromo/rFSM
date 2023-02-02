@@ -14,32 +14,33 @@ require("rfsm")
 local pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
    = pairs, ipairs, print, table, type, assert, gv, io, utils, rfsm
 
-module("rfsm2uml")
+-- module("rfsm2uml")
+rfsm2uml = {}
 
-param = {}
-param.fontsize = 12.0
-param.trfontsize = 7.0
-param.ndfontsize = 8.0
-param.cs_border_color = "black"
-param.cs_fillcolor = "white"
-param.layout="dot"
-param.rankdir="TD"
-param.show_fqn = false
+rfsm2uml.param = {}
+rfsm2uml.param.fontsize = 12.0
+rfsm2uml.param.trfontsize = 7.0
+rfsm2uml.param.ndfontsize = 8.0
+rfsm2uml.param.cs_border_color = "black"
+rfsm2uml.param.cs_fillcolor = "white"
+rfsm2uml.param.layout="dot"
+rfsm2uml.param.rankdir="TD"
+rfsm2uml.param.show_fqn = false
 
-param.err = print
-param.warn = print
-param.dbg = function () return true end
+rfsm2uml.param.err = print
+rfsm2uml.param.warn = print
+rfsm2uml.param.dbg = function (...) return true end
 
 -- setup common properties
 local function set_props(h)
    gv.setv(h, "fixedsize", "false")
-   gv.setv(h, "fontsize", param.fontsize)
+   gv.setv(h, "fontsize", rfsm2uml.param.fontsize)
 end
 
 -- setup transition propeties
 local function set_trprops(h)
    gv.setv(h, "fixedsize", "false")
-   gv.setv(h, "fontsize", param.trfontsize)
+   gv.setv(h, "fontsize", rfsm2uml.param.trfontsize)
    gv.setv(h, "arrowhead", "vee")
    gv.setv(h, "arrowsize", "0.5")
 end
@@ -47,7 +48,7 @@ end
 -- setup node properties
 local function set_ndprops(h)
    gv.setv(h, "fixedsize", "false")
-   gv.setv(h, "fontsize", param.ndfontsize)
+   gv.setv(h, "fontsize", rfsm2uml.param.ndfontsize)
 end
 
 local function setup_color(state, nh)
@@ -70,7 +71,7 @@ local function get_shandle(gh, fqn)
    local nh = gv.findnode(gh, fqn)
    if nh then return nh, "node" end
 
-   param.err("No state '" .. fqn .. "'")
+   rfsm2uml.param.err("No state '" .. fqn .. "'")
    return false
 end
 
@@ -80,18 +81,18 @@ local function new_gra(name, caption)
    caption = caption or ""
    set_props(gh)
    gv.setv(gh, "compound", "true")
-   gv.setv(gh, "fontsize", param.fontsize)
+   gv.setv(gh, "fontsize", rfsm2uml.param.fontsize)
    gv.setv(gh, "labelloc", "t")
    gv.setv(gh, "label", name .. ' - ' .. caption)
    gv.setv(gh, "remincross", "true")
    gv.setv(gh, "splines", "true")
-   gv.setv(gh, "rankdir", param.rankdir or "TD")
+   gv.setv(gh, "rankdir", rfsm2uml.param.rankdir or "TD")
 
    -- layout clusters locally before integrating
    -- doesn't seem to make any difference
    -- gv.setv(gh, "clusterrank", "local")
 
-   param.dbg("creating new graph " .. name)
+   rfsm2uml.param.dbg("creating new graph " .. name)
    return gh
 end
 
@@ -102,7 +103,7 @@ local function new_conn(gh, conn)
    assert(rfsm.is_conn(conn), "Obj not a connector")
 
    if gv.findnode(ph, conn._fqn) then
-      param.err("graph " .. conn._parent._fqn .. "already has a node " .. conn._fqn)
+      rfsm2uml.param.err("graph " .. conn._parent._fqn .. "already has a node " .. conn._fqn)
       return false
    end
 
@@ -117,19 +118,19 @@ local function new_conn(gh, conn)
 	 gv.setv(nh, "shape", "circle")
 	 gv.setv(nh, "height", "0.4")
       end
-   else param.err("ERROR: unknown conn type")  end
+   else rfsm2uml.param.err("ERROR: unknown conn type")  end
 
    gv.setv(nh, "label", conn._id)
    gv.setv(nh, "fixedsize", "true")
 
-   param.dbg("creating new connector " .. conn._fqn)
+   rfsm2uml.param.dbg("creating new connector " .. conn._fqn)
    return nh
 end
 
 -- create a new simple state
 local function new_sista(gh, state, label)
 
-   param.dbg("creating new simple state '" .. state._fqn)
+   rfsm2uml.param.dbg("creating new simple state '" .. state._fqn)
 
    local __label
    local ph, type = get_shandle(gh, state._parent._fqn)
@@ -138,7 +139,7 @@ local function new_sista(gh, state, label)
 
    -- tbd: use gh here?
    if gv.findnode(ph, state._fqn) then
-      param.err("graph already has a node " .. state._fqn)
+      rfsm2uml.param.err("graph already has a node " .. state._fqn)
       return false
    end
 
@@ -150,7 +151,7 @@ local function new_sista(gh, state, label)
 
    setup_color(state, nh)
 
-   if param.show_fqn then __label = state._fqn
+   if rfsm2uml.param.show_fqn then __label = state._fqn
    else __label=state._id end
 
    if label then __label = __label .. "\n" .. label end
@@ -161,7 +162,7 @@ end
 -- create an new composite state
 local function new_csta(gh, state, label)
 
-   param.dbg("creating new composite state " .. state._fqn)
+   rfsm2uml.param.dbg("creating new composite state " .. state._fqn)
 
    local __label
    local ph = get_shandle(gh, state._parent._fqn)
@@ -171,13 +172,13 @@ local function new_csta(gh, state, label)
 
    -- tbd: use gh here?
    if gv.findsubg(ph, iname) then
-      param.err("graph already has a subgraph " .. state._fqn)
+      rfsm2uml.param.err("graph already has a subgraph " .. state._fqn)
       return false
    end
 
    local ch = gv.graph(ph, iname)
    set_ndprops(ch)
-   gv.setv(ch, "color", param.cs_border_color)
+   gv.setv(ch, "color", rfsm2uml.param.cs_border_color)
    gv.setv(ch, "style", "bold")
    setup_color(state, ch)
 
@@ -185,7 +186,7 @@ local function new_csta(gh, state, label)
    --else gv.setv(ch, "label", state._id) end
 
    -- fqn or id?
-   if param.show_fqn then __label = state._fqn
+   if rfsm2uml.param.show_fqn then __label = state._fqn
    else __label=state._id end
 
    -- append user label
@@ -200,7 +201,7 @@ end
 local function new_tr(gh, src, tgt, events)
    local label
 
-   param.dbg("creating transition from " .. src .. " -> " .. tgt)
+   rfsm2uml.param.dbg("creating transition from " .. src .. " -> " .. tgt)
 
    local sh, shtype = get_shandle(gh, src)
    local th, thtype = get_shandle(gh, tgt)
@@ -250,7 +251,7 @@ local function proc_node(gh, node)
       elseif rfsm.is_leaf(node) then new_sista(gh, node)
    elseif rfsm.is_conn(node) then new_conn(gh, node)
    else
-      param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)
+      rfsm2uml.param.err("unknown node type: " .. node:type() .. ", name=" .. node._fqn)
    end
 end
 
@@ -275,26 +276,28 @@ local function fsm2gh(root, caption)
    return gh
 end
 
-function rfsm2uml(root, format, outfile, caption)
+function rfsm2uml.rfsm2uml(root, format, outfile, caption)
 
    if not root._initialized then
-      param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
+      rfsm2uml.param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
    end
 
    local gh = fsm2gh(root, caption)
-   gv.layout(gh, param.layout)
-   param.dbg("rfsm2uml: running " .. param.layout .. " layouter")
+   gv.layout(gh, rfsm2uml.param.layout)
+   rfsm2uml.param.dbg("rfsm2uml: running " .. rfsm2uml.param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   param.dbg("rfsm2uml: rendering to " .. format .. ", written result to " .. outfile)
+   rfsm2uml.param.dbg("rfsm2uml: rendering to " .. format .. ", written result to " .. outfile)
 end
 
 function rfsm2dot(root, outfile, caption)
    if not root._initialized then
-      param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
+      rfsm2uml.param.err("rfsm2uml ERROR: fsm " .. root._id .. " uninitialized")
       return false
    end
 
    local gh = fsm2gh(root, caption or " ")
    gv.write(gh, outfile)
 end
+
+return rfsm2uml

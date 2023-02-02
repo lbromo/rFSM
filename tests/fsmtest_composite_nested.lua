@@ -22,7 +22,7 @@ local function safe_doo()
    end
 end
 
-testfsm = rfsm.load("../examples/composite_nested.lua")
+testfsm = rfsm.load("examples/composite_nested.lua")
 testfsm.dbg = false
 
 local test = {

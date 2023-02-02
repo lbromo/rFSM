@@ -19,7 +19,8 @@ local assert = assert
 local type = type
 local ts = tostring
 
-module("rfsm_proto")
+--module("rfsm_proto")
+rfsm_proto = {}
 
 --- Default configuration
 local def_host = "localhost" 	-- use '*' for host to bind to all local interfaces.
@@ -180,10 +181,10 @@ local function gen_updater(conf)
 end
 
 local function __install(fsm, t)
-   host = t.host or def_host
-   port = t.port or def_port
-   read_timeout = t.read_timeout or def_read_timeout
-   allow_send = t.allow_send or false
+   local host = t.host or def_host
+   local port = t.port or def_port
+   local read_timeout = t.read_timeout or def_read_timeout
+   local allow_send = t.allow_send or false
 
    fsm.info("rfsm_proto: rfsm introspection protocol loaded ("
 	    ..host..":"..ts(port).."/"..ts(read_timeout)..")")
@@ -205,9 +206,11 @@ local function __install(fsm, t)
 end
 
 --- Install the
-function install(t)
+function rfsm_proto.install(t)
    rfsm.preproc[#rfsm.preproc+1] =
       function(fsm)
 	 __install(fsm, t or {})
       end
 end
+
+return rfsm_proto

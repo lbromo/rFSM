@@ -13,7 +13,8 @@ local pcall = pcall
 local tostring = tostring
 local print = print -- debugging only
 
-module("rfsm2json")
+--module("rfsm2json")
+rfsm2json = {}
 
 -- shortcuts
 local mapfsm = rfsm.mapfsm
@@ -33,7 +34,7 @@ local RFSM2JSON_VERSION = 2
 -- }
 --- Convert an initialized rFSM instance to the json representation
 -- @param fsm initalized rFSM instance
-function encode(fsm)
+function rfsm2json.encode(fsm)
    if not fsm._initialized then
       error("rfsm2json: initialized FSM required")
       return false
@@ -43,10 +44,12 @@ function encode(fsm)
    res.graph = rfsm_marsh.model2tab(fsm)
    if fsm._act_leaf then
       res.active_leaf=fsm._act_leaf._fqn
-      res.active_leaf_state=get_sta_mode(fsm._act_leaf)
+      res.active_leaf_state=rfsm.get_sta_mode(fsm._act_leaf)
    else
       res.active_leaf = false
       res.active_leaf_state = false
    end
    return json.encode(res)
 end
+
+return rfsm2json

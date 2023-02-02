@@ -18,7 +18,7 @@ local utils = require "utils"
 local string, print, ipairs, pairs = string, print, ipairs, pairs
 local get_sta_mode = rfsm.get_sta_mode
 
-module("rfsm_await")
+--module("rfsm_await")
 
 --- Pre-process await and setup handlers.
 -- @param fsm initalized root fsm.
@@ -94,7 +94,7 @@ local function expand_await(fsm)
 			tr.src.exit = utils.advise('after', tr.src.exit, reset) -- reset on src state exit
 
 			if tr.guard then
-			   old_guard = tr.guard
+			   local old_guard = tr.guard
 			   tr.guard=function(...) return cond(...) and old_guard(...) end
 			else
 			   tr.guard = cond

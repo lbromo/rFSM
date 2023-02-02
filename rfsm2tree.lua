@@ -12,20 +12,21 @@ require('utils')
 local pairs, ipairs, print, table, string, type, assert, gv, io, rfsm
    = pairs, ipairs, print, table, string, type, assert, gv, io, rfsm
 
-module("rfsm2tree")
+-- module("rfsm2tree")
+rfsm2tree = {}
 
-param = {}
+rfsm2tree.param = {}
 
-param.trfontsize = 7.0
-param.show_fqn = false
-param.and_color="green"
-param.and_style="dashed"
-param.hedge_color="blue"
-param.hedge_style="dotted"
+rfsm2tree.param.trfontsize = 7.0
+rfsm2tree.param.show_fqn = false
+rfsm2tree.param.and_color="green"
+rfsm2tree.param.and_style="dashed"
+rfsm2tree.param.hedge_color="blue"
+rfsm2tree.param.hedge_style="dotted"
 
-param.layout="dot"
-param.err=print
-param.dbg = function () return true end
+rfsm2tree.param.layout="dot"
+rfsm2tree.param.err=print
+rfsm2tree.param.dbg = function (...) return true end
 
 -- overall state properties
 
@@ -131,7 +132,7 @@ end
 
 
 -- convert fsm to
-function rfsm2tree(fsm, format, outfile)
+function rfsm2tree.rfsm2tree(fsm, format, outfile)
 
    if not fsm._initialized then
       param.err("rfsm2tree ERROR: fsm " .. (fsm._id or 'root') .. " uninitialized")
@@ -140,7 +141,9 @@ function rfsm2tree(fsm, format, outfile)
 
    local gh = fsm2gh(fsm)
    gv.layout(gh, param.layout)
-   param.dbg("rfsm2tree: running " .. param.layout .. " layouter")
+   rfsm2tree.param.dbg("rfsm2tree: running " .. rfsm2tree.param.layout .. " layouter")
    gv.render(gh, format, outfile)
-   param.dbg("rfsm2tree: rendering to " .. format .. ", written result to " .. outfile)
+   rfsm2tree.param.dbg("rfsm2tree: rendering to " .. format .. ", written result to " .. outfile)
 end
+
+return rfsm2tree

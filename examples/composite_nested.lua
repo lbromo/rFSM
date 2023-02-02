@@ -1,7 +1,8 @@
 require ("rfsmpp")
 
 local function puts(...)
-   return function () print(unpack(arg)) end
+   local arg = {...}
+   return function () print(table.unpack(arg)) end
 end
 
 local function safe_doo()

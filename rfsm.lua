@@ -6,7 +6,7 @@
 -- SPDX-License-Identifier: BSD-3-Clause
 --
 
-require ('utils')
+require('utils')
 
 local table = table
 local io = io
@@ -19,16 +19,17 @@ local print = print
 local tostring = tostring
 local string = string
 local type = type
-local loadstring = loadstring
+local loadstring = load
 local dofile = dofile
 local assert = assert
 local setmetatable = setmetatable
 local getmetatable = getmetatable
-local unpack = unpack
+local unpack = table.unpack
 local error = error
 local utils = utils
 
-module("rfsm")
+--module("rfsm")
+rfsm = {}
 
 local map = utils.map
 local foreach = utils.foreach
@@ -43,16 +44,16 @@ preproc = {}
 -- required: -
 -- optional: entry, doo (only if leaf) exit, states, connectors, transitions
 -- 'root' is a composite state which requires an 'initial' connector
-state = {}
-state.rfsm=true
+rfsm.state = {}
+rfsm.state.rfsm=true
 
-function state:type() return 'state' end
-function state:new(t)
+function rfsm.state:type() return 'state' end
+function rfsm.state:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(state, {__call=state.new})
+setmetatable(rfsm.state, {__call=rfsm.state.new})
 
 
 --
@@ -68,19 +69,19 @@ local function events2str(ev)
    end
 end
 
-trans = {}
-trans.rfsm=true
+rfsm.trans = {}
+rfsm.trans.rfsm=true
 
-function trans:new(t)
+function rfsm.trans:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(trans, {__call=trans.new})
+setmetatable(rfsm.trans, {__call=rfsm.trans.new})
 
-function trans:type() return 'transition' end
+function rfsm.trans:type() return 'transition' end
 
-function trans:__tostring()
+function rfsm.trans:__tostring()
    local src, tgt = "none", "none"
    local pn = ""
 
@@ -102,23 +103,23 @@ function trans:__tostring()
 --
 -- connector
 --
-conn = {}
-conn.rfsm=true
+rfsm.conn = {}
+rfsm.conn.rfsm=true
 
-function conn:type() return 'connector' end
-function conn:new(t)
+function rfsm.conn:type() return 'connector' end
+function rfsm.conn:new(t)
    setmetatable(t, self)
    self.__index = self
    return t
 end
-setmetatable(conn, {__call=conn.new})
+setmetatable(rfsm.conn, {__call=rfsm.conn.new})
 
 -- aliases
-sista = state; simple_state = state
-csta = state; composite_state = state
-connector = conn
-transition = trans
-yield = coroutine.yield
+rfsm.sista = rfsm.state; rfsm.simple_state = rfsm.state
+rfsm.csta = rfsm.state; rfsm.composite_state = rfsm.state
+rfsm.connector = rfsm.conn
+rfsm.transition = rfsm.trans
+rfsm.yield = coroutine.yield
 
 -- check if a table key is metadata (for now starts with a '_')
 function is_meta(key) return string.sub(key, 1, 1) == '_' end
@@ -150,7 +151,7 @@ end
 function is_composite_slow(s) return is_state(s) and has_subnodes(s) end
 function is_leaf_slow(s) return is_state(s) and not is_composite(s) end
 is_composite=utils.memoize(is_composite_slow)
-is_leaf=utils.memoize(is_leaf_slow)
+rfsm.is_leaf=utils.memoize(is_leaf_slow)
 
 -- check for valid and initalized 'root'
 function is_root(s) return is_composite(s) and s._id == 'root' end
@@ -162,7 +163,7 @@ function is_nr_node(s) return is_node(s) and not is_root(s) end
 -- type->char, e.g. 'Composite'-> 'C'
 function fsmobj_tochar(obj)
    if is_composite(obj) then return "CS"
-   elseif is_leaf(obj) then return "LS"
+   elseif rfsm.is_leaf(obj) then return "LS"
    elseif is_trans(obj) then return "TR"
    elseif is_conn(obj) then return "c"
    else return end
@@ -182,7 +183,7 @@ end
 -- The file must contain an rfsm simple or composite state that is returned.
 -- @param file name of file
 -- @return uninitalized fsm.
-function load(file)
+function rfsm.load(file)
    local fsm = dofile(file)
    if not is_state(fsm) then
       error("rfsm.load: no valid rfsm in file '" .. tostring(file) .. "' found.")
@@ -293,7 +294,7 @@ function fsm_merge(fsm, parent, obj, id)
    end
 
    -- merge the object
-   if is_leaf(obj) or is_conn(obj) then
+   if rfsm.is_leaf(obj) or is_conn(obj) then
       parent[id] = obj
       obj._parent = parent
       obj._id = id
@@ -356,7 +357,7 @@ local function add_defconn(fsm)
    local function __add_trans_defconn(tr, p)
       if is_composite(p) then
 	 if tr.src == 'initial' and p.initial == nil then
-	    fsm_merge(fsm, p, conn:new{}, 'initial')
+	    fsm_merge(fsm, p, rfsm.conn:new{}, 'initial')
 	    fsm.info("INFO: created undeclared connector " .. p._fqn .. ".initial")
 	 end
       end
@@ -638,7 +639,7 @@ end
 --- initialize fsm from rfsm template
 -- @param rfsm template to initialize
 -- @return inialized fsm
-function init(fsm_templ)
+function rfsm.init(fsm_templ)
 
    assert(is_state(fsm_templ), "invalid fsm model passed to rfsm.init")
 
@@ -705,7 +706,7 @@ function reset(fsm)
    fsm._curq = {}
    fsm._act_leaf = false
    mapfsm(function (c) c._actchild = nil end, fsm, is_composite)
-   mapfsm(function (s) s._doo_co = nil end, fsm, is_leaf)
+   mapfsm(function (s) s._doo_co = nil end, fsm, rfsm.is_leaf)
 end
 
 
@@ -715,7 +716,7 @@ end
 
 ----------------------------------------
 -- send events to the local fsm event queue
-function send_events(fsm, ...)
+function rfsm.send_events(fsm, ...)
    if not fsm or not is_initialized_root(fsm) then error("ERROR send_events: invalid fsm argument") end
    fsm.dbg("RAISED", ...)
    for _,v in ipairs({...}) do table.insert(fsm._intq, v) end
@@ -802,10 +803,10 @@ local function actchild_rm(parent, child)
 end
 
 -- return actchild, can be nil!
-function actchild_get(state) return state._actchild end
+function rfsm.actchild_get(state) return state._actchild end
 
 -- get state mode
-function get_sta_mode(s)
+function rfsm.get_sta_mode(s)
    return s._mode or "inactive"
 end
 
@@ -813,7 +814,7 @@ end
 function set_sta_mode(s, m)
    assert(is_state(s), "can't set_mode on non state type")
 
-   if is_leaf(s) then assert(m=='active' or m=='inactive' or m=='done')
+   if rfsm.is_leaf(s) then assert(m=='active' or m=='inactive' or m=='done')
    else assert(m=='active' or m=='inactive') end -- must be a csta
 
    s._mode = m
@@ -836,7 +837,7 @@ local function run_doos(fsm)
 
    -- can safely assume an act_leaf exists, because run_doos is never
    -- called during transitions.
-   if get_sta_mode(fsm._act_leaf) ~= 'active' then
+   if rfsm.get_sta_mode(fsm._act_leaf) ~= 'active' then
       return true
    else
       local state = fsm._act_leaf
@@ -862,7 +863,7 @@ local function run_doos(fsm)
 	       doo_done = true
 	       state._doo_co = nil
 	       set_sta_mode(state, 'done')
-	       send_events(fsm, "e_done@" .. state._fqn)
+	       rfsm.send_events(fsm, "e_done@" .. state._fqn)
 	       fsm.dbg("DOO", "removing completed coroutine of " .. state._fqn .. " doo")
 	    end
 	 end
@@ -887,11 +888,11 @@ local function enter_one_state(fsm, state, hot)
       end
    end
 
-   if is_leaf(state) then
+   if rfsm.is_leaf(state) then
       fsm._act_leaf = state
       if not state.doo then
 	 set_sta_mode(state, 'done')
-	 send_events(fsm, "e_done@" .. state._fqn)
+	 rfsm.send_events(fsm, "e_done@" .. state._fqn)
       else -- is there an old coroutine lingering?
 	 if not hot and state._doo_co then state._doo_co = nil end
       end
@@ -909,12 +910,12 @@ function exit_state(fsm, state)
    if not is_state(state) then return end  -- don't try to exit connectors.
 
    -- if composite exit child states first
-   if is_composite(state) then exit_state(fsm, actchild_get(state)) end
+   if is_composite(state) then exit_state(fsm, rfsm.actchild_get(state)) end
 
    if is_state(state) then
       -- save this for possible history entry
       state._parent._last_active = state
-      state._parent._last_active_mode = get_sta_mode(state)
+      state._parent._last_active_mode = rfsm.get_sta_mode(state)
 
       set_sta_mode(state, 'inactive')
 
@@ -927,7 +928,7 @@ function exit_state(fsm, state)
       end
 
       -- don't cleanup coroutine, could be used later
-      if is_leaf(state) then fsm._act_leaf = false end
+      if rfsm.is_leaf(state) then fsm._act_leaf = false end
    end
    fsm.dbg("STATE_EXIT", state._fqn)
 end
@@ -993,7 +994,7 @@ local function exec_trans_exit(fsm, tr)
 end
 
 -- Execute Part 2 of the transition: the effect
-local function exec_trans_effect(fsm, tr)
+local function exec_trans_effect(fsm, tr, events)
    -- run effect
    fsm.dbg("EFFECT", tostring(tr))
    if tr.effect then
@@ -1183,7 +1184,7 @@ function node_find_enabled(fsm, start, events)
 	    -- find continuation
 	    local tgt = tr.tgt
 	    local tail
-	    if is_leaf(tgt) then tail = { node=tgt, nextl=false }
+	    if rfsm.is_leaf(tgt) then tail = { node=tgt, nextl=false }
 	    elseif is_conn(tgt) then tail = __find_path(tgt, events)
 	    else fsm.err("ERROR: node_find_path invalid starting node"
 			 .. start._fqn .. ", type" .. start:type()) end
@@ -1210,7 +1211,7 @@ local function fsm_find_enabled(fsm, events)
       fsm.dbg("CHECKING", "depth:", depth, "for transitions from " .. state._fqn)
       path = node_find_enabled(fsm, state, events)
       if path then return path end
-      local next = actchild_get(state)
+      local next = rfsm.actchild_get(state)
       if not next then return end
       depth = depth + 1
       return __find_enabled(next)
@@ -1272,7 +1273,7 @@ end
 -- @param fsm initialized rfsm state machine
 -- @param n number of steps to execute. default: 1.
 -- @return idle boolean if fsm is idle or not
-function step(fsm, n)
+function rfsm.step(fsm, n)
    if not is_initialized_root(fsm) then fsm.err("ERROR step: invalid fsm") end
 
    local idle = true
@@ -1315,7 +1316,7 @@ function step(fsm, n)
       return idle
    else
       if idle then
-	 if fsm.idle_hook then fsm.idle_hook(fsm); idle = false  -- call idle hook
+	 if fsm.idle_hook then frsm.idle_hook(fsm); idle = false  -- call idle hook
 	 else
 	    fsm.dbg("HIBERNATING", "no events, no idle_hook, no doos or doo idle, halting engines")
 	    return true -- we are idle
@@ -1323,7 +1324,7 @@ function step(fsm, n)
       end
    end
    -- tail call
-   return step(fsm, n)
+   return rfsm.step(fsm, n)
 end
 
 --- run the fsm until there is nothing else to do.
@@ -1331,7 +1332,7 @@ end
 -- the doo function has completed or is idle.
 -- @param fsm initialized rfsm state machine
 -- @return idle boolean if fsm is idle or not
-function run(fsm)
+function rfsm.run(fsm)
    if not is_initialized_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
-   return step(fsm, math.huge)
+   return rfsm.step(fsm, math.huge)
 end

@@ -16,8 +16,6 @@ local print, ipairs, pairs, error, type = print, ipairs, pairs, error, type
 
 local actchild_get = rfsm.actchild_get
 
-module 'rfsm_preview'
-
 local function do_preview(fsm)
    local function preview_otrs(state)
       local likely=nil

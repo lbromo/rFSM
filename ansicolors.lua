@@ -23,7 +23,8 @@ local tostring = tostring
 local setmetatable = setmetatable
 local schar = string.char
 
-module 'ansicolors'
+--module 'ansicolors'
+ansicolors = {}
 
 local colormt = {}
 
@@ -36,7 +37,7 @@ function colormt:__concat(other)
 end
 
 function colormt:__call(s)
-    return self .. s .. _M.reset
+    return self .. s .. ansicolors.reset
 end
 
 colormt.__metatable = {}
@@ -78,5 +79,7 @@ local colors = {
 }
 
 for c, v in pairs(colors) do
-    _M[c] = makecolor(v)
+    ansicolors[c] = makecolor(v)
 end
+
+return ansicolors
