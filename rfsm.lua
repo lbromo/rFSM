@@ -1336,3 +1336,5 @@ function rfsm.run(fsm)
    if not is_initialized_root(fsm) then fsm.err("ERROR", "run: invalid fsm") end
    return rfsm.step(fsm, math.huge)
 end
+
+return rfsm
